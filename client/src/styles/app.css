@@ -1,0 +1,81 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f6f8;
+}
+
+.page, .login-wrap, .room-grid {
+  padding: 24px;
+}
+
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  width: 320px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.logo {
+  width: 120px;
+  margin: 0 auto;
+}
+
+input, button {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.room-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+}
+
+.video-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.video {
+  width: 280px;
+  height: 200px;
+  background: #111;
+  border-radius: 8px;
+}
+
+.chatbox {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.chatlog {
+  height: 320px;
+  overflow: auto;
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.error {
+  color: red;
+}
