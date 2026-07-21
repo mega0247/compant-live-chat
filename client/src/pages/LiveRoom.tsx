@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../hooks/useSocket";
-import { useWebRTC } from "../hooks/useWebRTC";
+import useWebRTC from "../hooks/useWebRTC"; // ✅ default import
 import ChatBox from "../components/ChatBox";
 import ParticipantList from "../components/ParticipantList";
 
@@ -15,7 +15,10 @@ export default function LiveRoom() {
 
   const [users, setUsers] = useState<any[]>([]);
 
-  const { localVideoRef, remoteVideoRef, call, ready } = useWebRTC(socket, roomId);
+  const { localVideoRef, remoteVideoRef, call, ready } = useWebRTC(
+    socket,
+    roomId
+  ); // ✅ call the hook function
 
   useEffect(() => {
     socket.emit("join-room", { roomId, userId });
@@ -37,7 +40,13 @@ export default function LiveRoom() {
         </button>
 
         <div className="video-row">
-          <video ref={localVideoRef} autoPlay muted playsInline className="video" />
+          <video
+            ref={localVideoRef}
+            autoPlay
+            muted
+            playsInline
+            className="video"
+          />
           <video ref={remoteVideoRef} autoPlay playsInline className="video" />
         </div>
 
