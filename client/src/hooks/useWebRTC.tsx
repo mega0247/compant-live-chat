@@ -19,8 +19,8 @@ type SignalMessage =
   | any;
 
 export type UseWebRTCResult = {
-  localVideoRef: React.RefObject<HTMLVideoElement | null>;
-  remoteVideoRef: React.RefObject<HTMLVideoElement | null>;
+  localVideoRef: React.RefObject<HTMLVideoElement>;
+  remoteVideoRef: React.RefObject<HTMLVideoElement>;
   call: () => Promise<void>;
   ready: boolean;
 };
@@ -29,8 +29,8 @@ export default function useWebRTC(
   socket: AnySocket,
   roomId: string
 ): UseWebRTCResult {
-  const localVideoRef = useRef<HTMLVideoElement | null>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null as any);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null as any);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -50,10 +50,7 @@ export default function useWebRTC(
     pc.onicecandidate = (event) => {
       if (!event.candidate) return;
 
-      const payload = {
-        roomId,
-        candidate: event.candidate,
-      };
+      const payload = { roomId, candidate: event.candidate };
 
       socket.emit("ice-candidate", payload);
       socket.emit("signal", {
@@ -67,6 +64,8 @@ export default function useWebRTC(
       const [stream] = event.streams;
       if (!stream) return;
 
+      // remoteVideoRef.current is typed as HTMLVideoElement (non-null),
+      // but it may still not be attached yet at runtime.
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = stream;
       }
@@ -168,8 +167,7 @@ export default function useWebRTC(
       onSignal({ type: "offer", ...payload });
     const onAnswer = async (payload: any) =>
       onSignal({ type: "answer", ...payload });
-    const onIce = async (payload: any) =>
-      onSignal({ type: "ice", ...payload });
+    const onIce = async (payload: any) => onSignal({ type: "ice", ...payload });
 
     socket.on("signal", onSignalEvent);
     socket.on("offer", onOffer);
@@ -200,8 +198,9 @@ export default function useWebRTC(
       }
       localStreamRef.current = null;
 
-      if (localVideoRef.current) localVideoRef.current.srcObject = null;
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+      if (localVideoRef.current) localVideoRef.current.srcObject = null as any;
+      if (remoteVideoRef.current)
+        remoteVideoRef.current.srcObject = null as any;
     };
   }, [ensureLocalStream, getOrCreatePC, roomId, socket]);
 
