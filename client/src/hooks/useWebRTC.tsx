@@ -1,4 +1,3 @@
-// src/hooks/useWebRTC.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type AnySocket = {
