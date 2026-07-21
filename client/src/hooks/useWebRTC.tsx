@@ -5,26 +5,23 @@ import { useWebRTC } from "../hooks/useWebRTC";
 
 export default function LiveRoom() {
   const { roomId } = useParams<{ roomId: string }>();
-
   const socket = useSocket();
 
   const safeRoomId = useMemo(() => roomId ?? "", [roomId]);
-
   const { localVideoRef, remoteVideoRef, call, ready } = useWebRTC(socket, safeRoomId);
 
   const [joined, setJoined] = useState(false);
 
   useEffect(() => {
-    // If roomId is missing, don't join
     if (!safeRoomId) return;
 
     socket.emit("join-room", { roomId: safeRoomId });
     setJoined(true);
 
+    // cleanup must return void
     return () => {
-      // React cleanup must return void
       socket.off("signal");
-      socket.disconnect();
+      void socket.disconnect();
     };
   }, [socket, safeRoomId]);
 
@@ -35,12 +32,23 @@ export default function LiveRoom() {
       <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
         <div>
           <div>Local</div>
-          <video ref={localVideoRef} autoPlay playsInline muted style={{ width: 320, background: "#000" }} />
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{ width: 320, background: "#000" }}
+          />
         </div>
 
         <div>
           <div>Remote</div>
-          <video ref={remoteVideoRef} autoPlay playsInline style={{ width: 320, background: "#000" }} />
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            style={{ width: 320, background: "#000" }}
+          />
         </div>
       </div>
 
