@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../hooks/useSocket";
-import { useWebRTC } from "../hooks/useWebRTC";
+import useWebRTC from "../hooks/useWebRTC";
 
 export default function LiveRoom() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -18,7 +18,6 @@ export default function LiveRoom() {
     socket.emit("join-room", { roomId: safeRoomId });
     setJoined(true);
 
-    // cleanup must return void
     return () => {
       socket.off("signal");
       void socket.disconnect();
