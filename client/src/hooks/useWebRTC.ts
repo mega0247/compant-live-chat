@@ -1,69 +1,58 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useSocket } from "../hooks/useSocket";
+import { useWebRTC } from "../hooks/useWebRTC";
 
-export function useWebRTC(socket: any, roomId: string) {
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const peerRef = useRef<RTCPeerConnection | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const [ready, setReady] = useState(false);
+export default function LiveRoom() {
+  const { roomId } = useParams<{ roomId: string }>();
+
+  const socket = useSocket();
+
+  const safeRoomId = useMemo(() => roomId ?? "", [roomId]);
+
+  const { localVideoRef, remoteVideoRef, call, ready } = useWebRTC(socket, safeRoomId);
+
+  const [joined, setJoined] = useState(false);
 
   useEffect(() => {
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    });
-    peerRef.current = pc;
+    // If roomId is missing, don't join
+    if (!safeRoomId) return;
 
-    pc.onicecandidate = (e) => {
-      if (e.candidate) {
-        socket.emit("signal", { roomId, data: { type: "ice-candidate", candidate: e.candidate } });
-      }
-    };
-
-    pc.ontrack = (e) => {
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
-    };
-
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-      streamRef.current = stream;
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-      setReady(true);
-    });
-
-    socket.on("signal", async (data: any) => {
-      if (!peerRef.current) return;
-
-      if (data.type === "offer") {
-        await peerRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerRef.current.createAnswer();
-        await peerRef.current.setLocalDescription(answer);
-        socket.emit("signal", { roomId, data: { type: "answer", answer } });
-      }
-
-      if (data.type === "answer") {
-        await peerRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
-      }
-
-      if (data.type === "ice-candidate") {
-        try {
-          await peerRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch {}
-      }
-    });
+    socket.emit("join-room", { roomId: safeRoomId });
+    setJoined(true);
 
     return () => {
+      // React cleanup must return void
       socket.off("signal");
-      pc.close();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      socket.disconnect();
     };
-  }, [socket, roomId]);
+  }, [socket, safeRoomId]);
 
-  const call = async () => {
-    if (!peerRef.current) return;
-    const offer = await peerRef.current.createOffer();
-    await peerRef.current.setLocalDescription(offer);
-    socket.emit("signal", { roomId, data: { type: "offer", offer } });
-  };
+  return (
+    <div style={{ padding: 16 }}>
+      <h2>Live Room: {safeRoomId || "-"}</h2>
 
-  return { localVideoRef, remoteVideoRef, call, ready };
+      <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
+        <div>
+          <div>Local</div>
+          <video ref={localVideoRef} autoPlay playsInline muted style={{ width: 320, background: "#000" }} />
+        </div>
+
+        <div>
+          <div>Remote</div>
+          <video ref={remoteVideoRef} autoPlay playsInline style={{ width: 320, background: "#000" }} />
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <button
+          onClick={call}
+          disabled={!ready || !joined}
+          style={{ padding: "10px 16px" }}
+        >
+          {ready ? "Start Call" : "Preparing media..."}
+        </button>
+      </div>
+    </div>
+  );
 }
